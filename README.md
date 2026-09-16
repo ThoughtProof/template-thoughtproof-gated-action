@@ -11,7 +11,7 @@ CLI (once this repo is public):
 
 ```bash
 npm create scaffold-hbar@latest my-gated-app -- \
-  --template <owner>/template-thoughtproof-gated-action \
+  --template ThoughtProof/template-thoughtproof-gated-action \
   --frontend nextjs-app \
   --solidity-framework hardhat \
   --network testnet \
