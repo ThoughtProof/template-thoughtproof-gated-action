@@ -91,8 +91,21 @@ contract GatedAction is Ownable, ReentrancyGuard {
         emit ExecutorUpdated(address(0), initialExecutor);
     }
 
+    /// @notice Credit HBAR via an EVM contract call (function selector + msg.value).
+    /// @dev Bare `sendTransaction({to, value})` on Hedera is often a CryptoTransfer to the
+    ///      account, which shows up on Hashio/mirror but is **not** spendable via Solidity
+    ///      `transfer`/`call{value}`. Always fund through `deposit` (or another payable fn).
+    function deposit() external payable {
+        if (msg.value == 0) revert InvalidAmount();
+        emit Funded(msg.sender, msg.value);
+    }
+
     receive() external payable {
         emit Funded(msg.sender, msg.value);
+    }
+
+    function treasuryBalance() external view returns (uint256) {
+        return address(this).balance;
     }
 
     function setRecorder(address next) external onlyOwner {
@@ -155,15 +168,13 @@ contract GatedAction is Ownable, ReentrancyGuard {
         }
         if (recipient != receipt.recipient) revert RecipientMismatch();
         if (amountWei != receipt.amountWei) revert AmountMismatch();
-        // Do not gate on address(this).balance. On Hedera that value can disagree
-        // with the account HBAR that eth_getBalance / mirror report; the value call
-        // still fail-closes via TransferFailed.
 
         receipt.used = true;
         executedCount += 1;
 
-        (bool ok, ) = recipient.call{ value: amountWei }("");
-        if (!ok) revert TransferFailed();
+        // Hedera tutorial path: Solidity `.transfer` after HBAR was credited via payable fn.
+        // `call{value}` against CryptoTransfer-credited account HBAR returns false here.
+        _sendHbar(payable(recipient), amountWei);
 
         emit AllowExecuted(allowId, receipt.proposalHash, recipient, amountWei);
     }
@@ -171,9 +182,21 @@ contract GatedAction is Ownable, ReentrancyGuard {
     /// @notice Owner rescue for stranded testnet funds (not a bypass of the gate path).
     function rescue(address to, uint256 amountWei) external onlyOwner nonReentrant {
         if (to == address(0)) revert ZeroAddress();
-        if (amountWei == 0 || amountWei > address(this).balance) revert InvalidAmount();
-        (bool ok, ) = to.call{ value: amountWei }("");
-        if (!ok) revert TransferFailed();
+        if (amountWei == 0) revert InvalidAmount();
+        _sendHbar(payable(to), amountWei);
+    }
+
+    function _sendHbar(address payable to, uint256 amountWei) internal {
+        // JSON-RPC / ethers use weibar (1e18 per HBAR). On live Hedera, Solidity
+        // `address.balance` / `.transfer` use tinybars (1e8 per HBAR). 1 tinybar = 1e10 wei.
+        // Hardhat (even a Hedera fork) stays in wei — only convert when the two views disagree.
+        uint256 nativeAmount = amountWei;
+        uint256 bal = address(this).balance;
+        uint256 weibarPerTinybar = 10_000_000_000;
+        if (bal < amountWei && amountWei >= weibarPerTinybar && bal >= amountWei / weibarPerTinybar) {
+            nativeAmount = amountWei / weibarPerTinybar;
+        }
+        to.transfer(nativeAmount);
     }
 
     function isAllowLive(uint256 allowId) external view returns (bool) {

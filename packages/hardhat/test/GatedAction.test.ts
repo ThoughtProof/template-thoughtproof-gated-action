@@ -9,8 +9,8 @@ describe("GatedAction", function () {
     const gated = await GatedAction.deploy(owner.address, recorder.address, executor.address);
     await gated.waitForDeployment();
 
-    // fund treasury
-    await owner.sendTransaction({ to: await gated.getAddress(), value: ethers.parseEther("10") });
+    // fund treasury via deposit (Hedera-spendable path). receive() still exists for local ETH-style sends.
+    await gated.deposit({ value: ethers.parseEther("10") });
 
     const proposalHash = ethers.keccak256(ethers.toUtf8Bytes('{"action":"transfer","to":"alice","amt":"1"}'));
     const evidenceHash = ethers.keccak256(ethers.toUtf8Bytes('{"verdict":"ALLOW","gate":"experiment-bed"}'));

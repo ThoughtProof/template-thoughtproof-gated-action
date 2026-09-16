@@ -37,25 +37,20 @@ Pass criteria:
 
 ## 3. Hedera testnet (submission evidence)
 
-Verified 2026-09-16 (Hedera testnet, chain 296):
+Verified 2026-09-16 (Hedera testnet, chain 296). Mirror `SUCCESS` on deploy, `recordAllow`, and `executeTransfer`. Contract leftover **100000 tinybars (0.001 HBAR)** after sending **0.01 HBAR** (deposited 0.011).
 
-| What | Link |
-| --- | --- |
-| Deployer | [`0xEb108a06C1085e9A94940eFFa8eFB119f65F2198`](https://hashscan.io/testnet/account/0xEb108a06C1085e9A94940eFFa8eFB119f65F2198) · account `0.0.10574755` |
-| `GatedAction` | [`0x5269A5DC385d4E8648392E6758e50664D07c21F8`](https://hashscan.io/testnet/contract/0x5269A5DC385d4E8648392E6758e50664D07c21F8) |
-| Deploy tx | [`0x2264…d8b9`](https://hashscan.io/testnet/transaction/0x2264840649d4c837077b679d7b19844899111f5b9333aea4a930a3303599d8b9) |
-| `recordAllow` | [`0x6682…7a97`](https://hashscan.io/testnet/transaction/0x6682fed29ef8f59a53e69996070b5cfeb22b37fa445b5314c721c6e267757a97) SUCCESS |
+- Deployer: https://hashscan.io/testnet/account/0xEb108a06C1085e9A94940eFFa8eFB119f65F2198 (`0.0.10574755`)
+- `GatedAction`: https://hashscan.io/testnet/contract/0x41DE479dB2a7b7362430c114B7e235FEfB8700b2 (`0.0.10575012`)
+- Deploy: https://hashscan.io/testnet/tx/0x9447a0de5d8845ea9364558ba1518528074345ef281ce70b9f1b1cee43fdb008
+- `recordAllow`: https://hashscan.io/testnet/tx/0x18c9fa29da6192ffcf3851e9cceb127460fb801ac185ce5e0878771cb83e6180
+- `executeTransfer`: https://hashscan.io/testnet/tx/0x68b56c8070f168250a28e1588ddff3441eec705592222f1c96f2aac56d1e5c44
 
-`executeTransfer` / HBAR-out via `call{value}` reverted `TransferFailed` on this testnet shot (local Hardhat tests still pass the full ALLOW→transfer path). Eligibility tx is deploy + `recordAllow`. Do not claim a completed on-chain HBAR send until a later execute tx is SUCCESS on HashScan.
+Fund only via `deposit()` (payable). Live Hedera Solidity value ops are **tinybars**; ethers `parseEther` is **weibar**. `_sendHbar` converts when the two disagree. Hardhat stays in wei.
 
-Remaining local steps:
-
-1. Portal faucet: https://portal.hedera.com/faucet
-2. `npm run hardhat:account:generate` (or import ECDSA key used by Scaffold)
-3. `npm run hardhat:deploy --network hederaTestnet`
-4. Fund `GatedAction` with a tiny HBAR amount
-5. `npm run hardhat:demo-gate -- --network hederaTestnet`
-6. Optional: `npm run hardhat:verify:testnet`
+```bash
+npm run hardhat:deploy --network hederaTestnet
+npm run hardhat:demo-gate -- --network hederaTestnet
+```
 
 ## 4. Wiring a real gate (optional, post-scaffold)
 

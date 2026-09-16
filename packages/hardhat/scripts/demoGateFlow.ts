@@ -38,12 +38,16 @@ async function main() {
   console.log("signer", signer.address);
   console.log("proposalHash", proposalHash);
 
-  // fund if empty
-  const bal = await ethers.provider.getBalance(dep.address);
-  if (bal < amount) {
-    const top = amount - bal + ethers.parseEther("0.001");
-    console.log("funding treasury", top.toString());
-    await (await signer.sendTransaction({ to: dep.address, value: top })).wait();
+  // RPC balance is weibar. Do not compare to treasuryBalance() on live Hedera (tinybars).
+  const rpcBal = await ethers.provider.getBalance(dep.address);
+  console.log("rpc balance wei", rpcBal.toString());
+  console.log("treasuryBalance (native)", (await gated.treasuryBalance()).toString());
+  if (rpcBal < amount) {
+    const top = amount - rpcBal + ethers.parseEther("0.001");
+    console.log("deposit", top.toString());
+    await (await gated.deposit({ value: top, gasLimit: 200_000 })).wait();
+    console.log("rpc after deposit", (await ethers.provider.getBalance(dep.address)).toString());
+    console.log("treasuryBalance after deposit", (await gated.treasuryBalance()).toString());
   }
 
   const existing = await gated.allowIdByProposal(proposalHash);
