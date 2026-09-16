@@ -155,7 +155,9 @@ contract GatedAction is Ownable, ReentrancyGuard {
         }
         if (recipient != receipt.recipient) revert RecipientMismatch();
         if (amountWei != receipt.amountWei) revert AmountMismatch();
-        if (address(this).balance < amountWei) revert InsufficientTreasury();
+        // Do not gate on address(this).balance. On Hedera that value can disagree
+        // with the account HBAR that eth_getBalance / mirror report; the value call
+        // still fail-closes via TransferFailed.
 
         receipt.used = true;
         executedCount += 1;

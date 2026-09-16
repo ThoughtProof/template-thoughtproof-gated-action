@@ -49,10 +49,12 @@ async function main() {
   const existing = await gated.allowIdByProposal(proposalHash);
   let allowId = existing;
   if (existing === 0n) {
-    const tx = await gated.recordAllow(proposalHash, evidenceHash, recipient, amount, expiresAt);
-    const rc = await tx.wait();
-    console.log("recordAllow tx", rc?.hash);
-    allowId = await gated.allowIdByProposal(proposalHash);
+    const tx = await gated.recordAllow(proposalHash, evidenceHash, recipient, amount, expiresAt, {
+    gasLimit: 500_000,
+  });
+  const rc = await tx.wait();
+  console.log("recordAllow tx", rc?.hash);
+  allowId = await gated.allowIdByProposal(proposalHash);
   } else {
     console.log("proposal already recorded as allowId", existing.toString());
   }
@@ -64,7 +66,7 @@ async function main() {
   }
 
   const before = await ethers.provider.getBalance(recipient);
-  const ex = await gated.executeTransfer(allowId, recipient, amount);
+  const ex = await gated.executeTransfer(allowId, recipient, amount, { gasLimit: 1_000_000 });
   const exRc = await ex.wait();
   const after = await ethers.provider.getBalance(recipient);
   console.log("executeTransfer tx", exRc?.hash);
