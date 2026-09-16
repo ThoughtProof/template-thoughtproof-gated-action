@@ -1,0 +1,60 @@
+{
+  "name": "thoughtproof-gated-action",
+  "description": "Fail-closed HBAR transfer on Hedera: off-chain gate ALLOW → on-chain recordAllow → execute. Agent proposes, ThoughtProof-style gate decides, contract is the hand. Experiment bed — not production Sentinel. Not Hedera-verified reasoning.",
+  "version": "0.1.0",
+  "create-scaffold-hbar": {
+    "capabilities": {
+      "frontend": ["nextjs-app"],
+      "solidityFramework": ["hardhat"],
+      "packageManager": ["npm", "yarn"]
+    },
+    "defaults": {
+      "frontend": "nextjs-app",
+      "solidityFramework": "hardhat",
+      "packageManager": "npm"
+    },
+    "outro": {
+      "sections": [
+        {
+          "steps": [
+            {
+              "text": "Gated HBAR hand: proposalHash + evidenceHash on-chain only after off-chain ALLOW. No execute without a live unused receipt."
+            }
+          ]
+        },
+        {
+          "title": "Next steps",
+          "steps": [
+            {
+              "label": "Install dependencies",
+              "command": "npm install --legacy-peer-deps"
+            },
+            {
+              "label": "Generate or import a deployer account",
+              "command": "{run:hardhat:account:generate}"
+            },
+            {
+              "label": "Compile & unit-test the gate contract",
+              "command": "{run:hardhat:test}"
+            },
+            {
+              "label": "Deploy GatedAction (local or testnet)",
+              "command": "{run:hardhat:deploy} --network localhost"
+            },
+            {
+              "label": "Run the simulated gate demo (not prod Sentinel)",
+              "command": "npm run hardhat:demo-gate -- --network localhost"
+            },
+            {
+              "label": "Start the frontend",
+              "command": "{run:next:dev}"
+            },
+            {
+              "text": "Read README.md + RUNBOOK.md. Wire a real verifier by replacing the demo hashes with your gate's proposalHash/evidenceHash. Testnet faucet: https://portal.hedera.com/faucet"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
